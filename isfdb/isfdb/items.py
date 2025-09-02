@@ -2,11 +2,20 @@
 #
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/items.html
+from __future__ import annotations
 
-import scrapy
+from dataclasses import dataclass, field
 
 
-class IsfdbItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+@dataclass
+class IsfdbItem:
+    title: str
+    awards: list[IsfdbAward] = field(default_factory=list)
+
+
+@dataclass
+class IsfdbAward:
+    rank: str
+    year: str
+    award: str
+    category: str

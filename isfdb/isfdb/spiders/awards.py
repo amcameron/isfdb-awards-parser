@@ -2,6 +2,8 @@ import logging
 
 import scrapy
 
+from ..items import IsfdbItem, IsfdbAward
+
 
 class IsfdbParseError(Exception):
     pass
@@ -66,7 +68,7 @@ class AwardsSpider(scrapy.Spider):
                 continue
             category = row.xpath("./td[3]/a/text()").get()
             awards.append(
-                dict(
+                IsfdbAward(
                     rank=rank,
                     year=year,
                     award=award,
@@ -74,4 +76,4 @@ class AwardsSpider(scrapy.Spider):
                 )
             )
 
-        yield dict(title=title, awards=awards)
+        yield IsfdbItem(title=title, awards=awards)
