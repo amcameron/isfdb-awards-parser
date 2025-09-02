@@ -1,0 +1,13 @@
+[project]
+name = "isfdb-awards-parser"
+version = "0.1.0"
+description = "Scrape ISFDB for award information"
+requires-python = ">=3.13"
+dependencies = [
+    "scrapy>=2.13.3",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+]
