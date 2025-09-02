@@ -53,7 +53,7 @@ class AwardsSpider(scrapy.Spider):
         try:
             title_idx = info_texts.index("Title:")
             title = info_texts[title_idx + 1]
-        except ValueError as exc:
+        except (ValueError, IndexError) as exc:
             raise IsfdbParseError("Title not found") from exc
 
         awards = []
