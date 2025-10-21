@@ -13,6 +13,14 @@ class IsfdbItem:
     year: str
     awards: list[IsfdbAward] = field(default_factory=list)
 
+    def __post_init__(self):
+        if self.awards:
+            match self.awards[0]:
+                case IsfdbAward(award):
+                    pass
+                case dict(award):
+                    self.awards = [IsfdbAward(**award) for award in self.awards]
+
 
 @dataclass
 class IsfdbAward:
