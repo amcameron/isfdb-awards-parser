@@ -35,6 +35,22 @@ class AwardsSpider(scrapy.Spider):
                     logging.warning(f"Unknown URL: {url}")
 
     def parse_collection(self, response):
+        collection_variant = response.xpath(
+            "//h2[contains(text(), 'Contents')]/preceding-sibling::text()[contains(., 'variant of')]/following-sibling::a[@href[contains(., 'title.cgi')]]"
+        )
+        if collection_variant:
+            variant_title = collection_variant.xpath("string(.)").get()
+            callback = partial(self.parse_title, title_override=variant_title)
+            yield response.follow(
+                collection_variant.xpath("./@href").get(),
+                callback=callback,
+            )
+        else:
+            href = response.xpath(
+                "//h2[contains(text(), 'Contents')]/preceding-sibling::a/@href[contains(., 'title.cgi')]"
+            ).get()
+            yield response.follow(href, callback=self.parse_title)
+
         for li in response.xpath(
             "//h2[contains(text(), 'Contents')]/following-sibling::ul/li[.//a[@href[contains(., 'title.cgi')]]]"
         ):
