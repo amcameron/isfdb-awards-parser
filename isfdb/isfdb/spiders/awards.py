@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 
 import scrapy
 
@@ -33,18 +34,29 @@ class AwardsSpider(scrapy.Spider):
                     logging.warning(f"Unknown URL: {url}")
 
     def parse_collection(self, response):
-        # TODO: The current logic should be used as a fallback.
-        #       The primary logic should check whether the row contains,
-        #       "(variant of (link))", and if so, follow that link instead.
-        for link in response.xpath(
-            "//h2[contains(text(), 'Contents')]/following-sibling::ul/li/a/@href[contains(., 'title.cgi')]"
+        for li in response.xpath(
+            "//h2[contains(text(), 'Contents')]/following-sibling::ul/li[.//a[@href[contains(., 'title.cgi')]]]"
         ):
-            yield response.follow(link, callback=self.parse_title)
+            li_text = li.xpath("string(.)").get()
+            if "• interior artwork" in li_text:
+                continue
+            elif "• essay" in li_text:
+                continue
+            variant = li.xpath(
+                "text()[contains(., '(variant of')]/following-sibling::a[@href[contains(., 'title.cgi')]]/@href"
+            )
+            if variant:
+                variant_title = li.css("a::text").get()
+                callback = partial(self.parse_title, title_override=variant_title)
+                yield response.follow(variant.get(), callback=callback)
+            else:
+                href = li.xpath(".//a[@href[contains(., 'title.cgi')]]/@href").get()
+                yield response.follow(
+                    href,
+                    callback=self.parse_title,
+                )
 
-    def parse_title(self, response):
-        # TODO: handle variant titles
-        #       (check for text in info block linking the original,
-        #       and follow that link to check for awards there)
+    def parse_title(self, response, title_override=None):
         info_texts = [
             text.strip()
             for text in response.xpath(
@@ -54,7 +66,7 @@ class AwardsSpider(scrapy.Spider):
         ]
         try:
             title_idx = info_texts.index("Title:")
-            title = info_texts[title_idx + 1]
+            title = title_override or info_texts[title_idx + 1]
         except (ValueError, IndexError) as exc:
             raise IsfdbParseError("Title not found") from exc
 
