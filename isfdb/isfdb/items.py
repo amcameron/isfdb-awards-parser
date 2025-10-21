@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 @dataclass
 class IsfdbItem:
     title: str
+    year: str
     awards: list[IsfdbAward] = field(default_factory=list)
 
 

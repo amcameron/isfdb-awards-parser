@@ -1,4 +1,5 @@
 import logging
+import re
 from functools import partial
 
 import scrapy
@@ -70,6 +71,13 @@ class AwardsSpider(scrapy.Spider):
         except (ValueError, IndexError) as exc:
             raise IsfdbParseError("Title not found") from exc
 
+        try:
+            date_idx = info_texts.index("Date:")
+            date = info_texts[date_idx + 1]
+            publication_year = re.search(r"[0-9]{4}", date).group(0)
+        except Exception as exc:
+            raise IsfdbParseError(f"Unable to parse date: {date}") from exc
+
         awards = []
         for row in response.xpath(self._awards_rows_xpath):
             rank = row.xpath("./td[1]/a/text()").get()
@@ -88,4 +96,4 @@ class AwardsSpider(scrapy.Spider):
                 )
             )
 
-        yield IsfdbItem(title=title, awards=awards)
+        yield IsfdbItem(title=title, year=publication_year, awards=awards)
