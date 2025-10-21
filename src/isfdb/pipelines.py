@@ -149,9 +149,7 @@ class IsfdbPipeline:
                     ("Morningstar Award", "Best Fantasy Newcomer"),
                 ]
             )
-        if "nebula" in award_lower:
-            replacements.append((r"^", "Best "))
-        if "sf chronicle" in award_lower:
+        if any(word in award_lower for word in ("nebula", "sf chronicle", "homer")):
             replacements.append((r"^", "Best "))
         if "sunburst" in award_lower:
             replacements.extend(
@@ -177,13 +175,32 @@ class IsfdbPipeline:
             raise DropItem(f"Ignoring award name: {name}")
 
         replacements = [
-            ("BSFA", "British Science Fiction"),
-            ("Clarke", "Arthur C Clarke"),
+            ("BSFA", "British Science Fiction Award"),
+            ("Clarke", "Arthur C Clarke Award"),
             ("Dick", "Philip K Dick Award"),
             ("Crook", "Compton Crook Memorial Award"),
-            ("BFA", "British Fantasy"),
+            ("BFA", "British Fantasy Award"),
             ("Stoker", "Bram Stoker Award"),
             ("Gemmell", "David Gemmell Legend"),
+            ("Tiptree / Otherwise", "Tiptree / Otherwise Award"),
+            ("Sturgeon", "Theodore Sturgeon Memorial Award"),
+            ("Aurealis", "Aurealis Award"),
+            ("Hugo", "Hugo Award"),
+            ("Nebula", "Nebula Award"),
+            ("Locus", "Locus Award"),
+            ("Ignyte", "Ignyte Award"),
+            ("HOMer", "HOMer Award"),
+            ("Eugie", "Eugie Award"),
+            ("Dragon", "Dragon Award"),
+            ("Ditmar", "Ditmar Award"),
+            ("Brandon", "Carl Brandon Society Award"),
+            ("Campbell Memorial", "John W Campbell Memorial Award"),
+            ("Norton", "Andre Norton Award"),
+            ("Analog", "Analog Award"),
+            ("SF Chronicle", "SF Chronicle Award"),
+            ("Shirley Jackson", "Shirley Jackson Award"),
+            ("Sunburst", "Sunburst Award"),
+            ("World Fantasy", "World Fantasy Award"),
         ]
 
         processed_name = reduce(lambda acc, val: acc.replace(*val), replacements, name)
