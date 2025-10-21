@@ -13,4 +13,5 @@ isfdb-format = "isfdb.format_awards:main"
 [dependency-groups]
 dev = [
     "black>=25.1.0",
+    "mypy>=1.11",
 ]
