@@ -12,9 +12,6 @@ BOT_NAME = "isfdb"
 SPIDER_MODULES = ["isfdb.spiders"]
 NEWSPIDER_MODULE = "isfdb.spiders"
 
-ADDONS: dict[str, int] = {}
-
-
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = "isfdb (+http://www.yourdomain.com)"
 
