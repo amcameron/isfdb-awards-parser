@@ -1,5 +1,6 @@
 import json
 from enum import Enum, auto
+from itertools import chain
 
 from .items import IsfdbItem, IsfdbAward
 
@@ -10,17 +11,19 @@ class FormatTarget(Enum):
 
 
 def fmt(target: FormatTarget, items: list[IsfdbItem]):
+    collection, items = items[0], items[1:]
+
     match target:
         case FormatTarget.DESCRIPTION:
-            _format_for_desc(items)
+            _format_for_desc(items, collection)
         case FormatTarget.TAGS:
-            _format_for_tags(items)
+            _format_for_tags(items, collection)
         case _:
             raise ValueError(f"unknown target: {target}")
 
 
-def _format_for_desc(items: list[IsfdbItem]):
-    for item in items:
+def _format_for_desc(collection_items: list[IsfdbItem], collection: IsfdbItem):
+    for item in collection_items:
         if not item.awards:
             print(f"{item.title} ({item.year})")
             continue
@@ -46,13 +49,13 @@ def _format_for_desc(items: list[IsfdbItem]):
         print(f"{'; '.join(category_strings)})")
 
 
-def _format_for_tags(items: list[IsfdbItem]):
-    # TODO: get awards for the collection itself as well (if any)
-    print(
-        ", ".join(
-            _format_award_for_tags(award) for item in items for award in item.awards
-        )
+def _format_for_tags(collection_items: list[IsfdbItem], collection: IsfdbItem):
+    all_awards = chain(
+        collection.awards,
+        chain.from_iterable(item.awards for item in collection_items),
     )
+
+    print(", ".join(map(_format_award_for_tags, all_awards)))
 
 
 def _format_award_for_tags(award: IsfdbAward) -> str:
@@ -83,7 +86,8 @@ def main():
     with open(args.input_file, "r") as f:
         data = json.load(f)
 
-    fmt(target, [IsfdbItem(**item) for item in data])
+    items = [IsfdbItem(**item) for item in data]
+    fmt(target, items)
 
 
 if __name__ == "__main__":
