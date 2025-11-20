@@ -47,6 +47,7 @@ class IsfdbPipeline:
         "brandon",
         "ihg",
         "ifa",
+        "sfbc",
     )
     _ignored_categories = ("ravenheart",)
     _ignored_ranks = ("withdraw", "decline", "below cutoff", "preliminary")
@@ -121,17 +122,23 @@ class IsfdbPipeline:
         if re.search(r"Compton Crook", category):
             return "Best First Novel"
 
-        replacements = [
+        replacements: list[tuple[str, str]] = [
             (r"LGBT.*Fiction.*", "LGBTQ Speculative Fiction"),
             ("Science Fiction", "SF"),
             (r" – English$", ""),
-            (r" - Adult$", " (Adult)"),
+            (r" - Adult$", ""),
             ("Eugie Award", "Best Short Fiction"),
         ]
 
         award_lower = award.lower()
         if "aurora" in award_lower:
-            replacements.append(("Best", "Best Canadian"))
+            replacements.extend(
+                [
+                    ("Best", "Best Canadian"),
+                    ("Long-Form Work in English.*", "Novel"),
+                    ("Short-Form Work in English.*", "Short Fiction"),
+                ]
+            )
         if "british fantasy" in award_lower:
             replacements.extend(
                 [
@@ -140,6 +147,10 @@ class IsfdbPipeline:
                     (r".*(Best Newcomer).*", r"\1"),
                 ]
             )
+        if "chesley" in award_lower:
+            if _contains_any(category_lower, ("achievement", "contribution")):
+                raise DropItem(f"Ignoring category: {category}")
+            replacements.append((" - .*$", ""))
         if "dick" in award_lower:
             replacements.append((r".*", "Best SF Paperback (US)"))
         if "gemmell" in award_lower:
@@ -154,7 +165,9 @@ class IsfdbPipeline:
         if "sunburst" in award_lower:
             replacements.extend(
                 [
-                    (r"Adult$", r"\g<0> Fiction"),
+                    (r".*Canadian.*", "Novel"),
+                    (r"^Adult$", "Novel"),
+                    (r"^Young Adult.*", "Novel (YA)"),
                     (r"^", "Best Canadian "),
                 ]
             )
