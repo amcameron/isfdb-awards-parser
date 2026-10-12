@@ -22,37 +22,47 @@ def _contains_any(haystack: str, needles: Iterable[str]):
 
 class IsfdbPipeline:
     _ignored_award_names = (
-        "prometheus",
-        "lasswitz",
-        "imaginaire",
-        "goodreads",
-        "locus online",
-        "endeavour",
-        "ignotus",
-        "neffy",
-        "mythopoeic",
-        "seiun",
-        "itogi",
-        "balrog",
-        "gaylactic",
-        "lodestar",
         "aml award",
+        "balrog",
+        "beehive",
+        "brandon",
         "canopus",
-        "shelley",
-        "gandalf",
-        "wellman",
         "deathrealm",
         "ditmar",
-        "utopia",
-        "brandon",
-        "ihg",
+        "endeavour",
+        "gandalf",
+        "gaylactic",
+        "goodreads",
         "ifa",
+        "ignotus",
+        "ihg",
+        "imaginaire",
+        "itogi",
+        "lambda",
+        "lasswitz",
+        "locus online",
+        "lodestar",
+        "mythopoeic",
+        "neffy",
+        "prometheus",
+        "seiun",
         "sfbc",
+        "shelley",
+        "utopia",
+        "wellman",
     )
     _ignored_categories = ("ravenheart",)
-    _ignored_ranks = ("withdraw", "decline", "below cutoff", "preliminary")
+    _ignored_ranks = (
+        "below cutoff",
+        "early submission",
+        "insufficient",
+        "made first",
+        "no award given",
+        "preliminary",
+        "withdraw",
+    )
 
-    def process_item(self, item, spider):
+    def process_item(self, item, spider=None):
         adapter = ItemAdapter(item)
         processed_awards = []
         for award in adapter["awards"]:
@@ -171,6 +181,8 @@ class IsfdbPipeline:
                     (r"^", "Best Canadian "),
                 ]
             )
+        if "le guin" in award_lower:
+            replacements.append((r".*(Le Guin Prize).*", r"\1"))
 
         processed_category = reduce(
             lambda acc, val: re.sub(*val, acc, count=1), replacements, category
@@ -188,37 +200,26 @@ class IsfdbPipeline:
             raise DropItem(f"Ignoring award name: {name}")
 
         replacements = [
-            ("BSFA", "British Science Fiction Award"),
-            ("Clarke", "Arthur C Clarke Award"),
-            ("Dick", "Philip K Dick Award"),
-            ("Crook", "Compton Crook Memorial Award"),
-            ("BFA", "British Fantasy Award"),
-            ("Stoker", "Bram Stoker Award"),
+            ("BFA", "British Fantasy"),
+            ("BSFA", "British Science Fiction"),
+            ("Brandon", "Carl Brandon Society"),
+            ("Campbell Memorial", "John W Campbell Memorial"),
+            ("Clarke", "Arthur C Clarke"),
+            ("Crook", "Compton Crook Memorial"),
+            ("Dick", "Philip K Dick"),
             ("Gemmell", "David Gemmell Legend"),
-            ("Tiptree / Otherwise", "Tiptree / Otherwise Award"),
-            ("Sturgeon", "Theodore Sturgeon Memorial Award"),
-            ("Aurealis", "Aurealis Award"),
-            ("Hugo", "Hugo Award"),
-            ("Nebula", "Nebula Award"),
-            ("Locus", "Locus Award"),
-            ("Ignyte", "Ignyte Award"),
-            ("HOMer", "HOMer Award"),
-            ("Eugie", "Eugie Award"),
-            ("Dragon", "Dragon Award"),
-            ("Ditmar", "Ditmar Award"),
-            ("Brandon", "Carl Brandon Society Award"),
-            ("Campbell Memorial", "John W Campbell Memorial Award"),
-            ("Norton", "Andre Norton Award"),
-            ("Analog", "Analog Award"),
-            ("SF Chronicle", "SF Chronicle Award"),
-            ("Shirley Jackson", "Shirley Jackson Award"),
-            ("Sunburst", "Sunburst Award"),
-            ("World Fantasy", "World Fantasy Award"),
+            ("Le Guin", "Ursula K Le Guin Prize"),
+            ("Locus Poll", "Locus"),
+            ("Norton", "Andre Norton"),
+            ("Stoker", "Bram Stoker"),
+            ("Sturgeon", "Theodore Sturgeon Memorial"),
         ]
 
         processed_name = reduce(lambda acc, val: acc.replace(*val), replacements, name)
 
-        if not any(processed_name.endswith(suffix) for suffix in ("Award", "Awards")):
-            processed_name = f"{processed_name} Awards"
+        if not any(
+            processed_name.endswith(suffix) for suffix in ("Award", "Awards", "Prize")
+        ):
+            processed_name = f"{processed_name} Award"
 
         return processed_name
