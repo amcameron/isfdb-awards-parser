@@ -4,11 +4,16 @@ version = "0.1.0"
 description = "Scrape ISFDB for award information"
 requires-python = ">=3.13"
 dependencies = [
+    "brotli>=1.2.0",
+    "dotenv>=0.9.9",
+    "pymysql>=1.2.0",
     "scrapy>=2.13.3",
+    "sqlalchemy>=2.0.52",
 ]
 
 [project.scripts]
 isfdb-format = "isfdb.format_awards:main"
+isfdb-query = "isfdb.query_awards:main"
 
 [dependency-groups]
 dev = [
