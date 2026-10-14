@@ -36,8 +36,9 @@ def main():
     )
 
     with Session(engine) as session:
-        query = f"""
-        WITH resolved_titles AS (
+        if args.command == "pub":
+            query = f"""
+            WITH resolved_titles AS (
   SELECT t.title_id AS oid, p.*
   FROM titles t
   JOIN titles p ON t.title_parent = p.title_id
@@ -78,7 +79,52 @@ LEFT JOIN award_cats ac USING (award_cat_id)
 LEFT JOIN award_types awt USING (award_type_id)
 WHERE pc.pub_id = {args.id}
 ORDER BY CONVERT(pc.pubc_page, SIGNED) ASC;
-        """
+            """
+        elif args.command == "title":
+            query = f"""
+            WITH resolved_titles AS (
+  SELECT t.title_id AS oid, p.*
+  FROM titles t
+  JOIN titles p ON t.title_parent = p.title_id
+  WHERE t.title_parent != 0
+  UNION ALL
+  SELECT t.title_id AS oid, t.*
+  FROM titles t
+  WHERE t.title_parent = 0
+)
+SELECT
+    t.title_title as title, year(t.title_copyright) as year,
+    CASE
+        WHEN a.award_level = 71 THEN 'no winner -- insufficient votes'
+        WHEN a.award_level = 72 THEN 'not on ballot -- insufficient nominations'
+        WHEN a.award_level = 73 THEN 'no award given this year'
+        WHEN a.award_level = 81 THEN 'withdrawn'
+        WHEN a.award_level = 82 THEN 'withdrawn -- nomination declined'
+        WHEN a.award_level = 83 THEN 'withdrawn -- conflict of interest'
+        WHEN a.award_level = 84 THEN 'withdrawn -- official publication in a previous year'
+        WHEN a.award_level = 85 THEN 'withdrawn -- ineligible'
+        WHEN a.award_level = 90 THEN 'finalist'
+        WHEN a.award_level = 91 THEN 'made first ballot'
+        WHEN a.award_level = 92 THEN 'preliminary nominee'
+        WHEN a.award_level = 93 THEN 'honorable mention'
+        WHEN a.award_level = 98 THEN 'early submission'
+        WHEN a.award_level = 99 THEN 'nomination below cutoff'
+        WHEN awt.award_type_poll = 'No' AND a.award_level > 1 THEN 'nominee'
+        WHEN awt.award_type_poll = 'No' AND a.award_level = 1 THEN 'winner'
+        ELSE a.award_level
+    END AS rank, 
+    YEAR(a.award_year) AS award_year, awt.award_type_short_name as award_type_name, ac.award_cat_name
+FROM resolved_titles t
+LEFT JOIN title_awards ta ON (t.title_id = ta.title_id OR t.oid = ta.title_id)
+LEFT JOIN awards a USING (award_id)
+LEFT JOIN award_cats ac USING (award_cat_id)
+LEFT JOIN award_types awt USING (award_type_id)
+WHERE t.oid = {args.id}
+ORDER BY a.award_year ASC;
+            """
+        else:
+            raise ValueError(f"Unknown command: {args.command}")
+
         result = session.execute(text(query))
 
         items_map: dict[tuple[str, str], IsfdbItem] = dict()
